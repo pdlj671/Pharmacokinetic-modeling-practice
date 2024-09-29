@@ -1,0 +1,66 @@
+---
+title: "mPBPK Skin"
+author: "JP"
+date: "2024-09-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries for mPBPK modeling and simulation
+
+```{r, message=FALSE}
+library(mrgsolve)
+library(dplyr)
+library(ggplot2)
+library(dmutate)
+```
+
+## Read mPBPK from folder
+
+```{r pressure, echo =FALSE}
+mod <- mread("IL-17A")
+```
+
+## Create a dose regimen for secukinumab (Oral dose)
+
+25 mg every week for a total of four weeks
+
+```{r, message = TRUE}
+dose <- ev(amt = 25, ii = 4, addl = 4, cmt = "ABS")
+dose
+```
+
+## Simulate concentration in serum and response over the course of 48 weeks
+
+```{r, message=TRUE}
+out <- mod %>%
+  ev(dose) %>%
+  mrgsim(end = 48, delta = 0.1)
+
+plot(out, Cserum + resp~.)
+```
+
+## Create three IV dose regimens
+
+```{r, message=TRUE}
+e1 <- ev(amt = 1000, ii = 4, addl = 4, cmt = "SERUM")
+e2 <- ev(amt = 1000, cmt = "SERUM")
+e3 <- ev(amt = 300, cmt = "SERUM")
+
+e <- as_data_set(e1,e2,e3)
+e
+```
+
+## Simulate serum concentration
+
+```{r, message = FALSE}
+mod %>%
+  ev(e) %>%
+  mrgsim( end = 392/7, delta = 0.1) %>%
+  plot()
+```
+
+
